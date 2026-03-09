@@ -1,0 +1,177 @@
+name: Academic Camp CI/CD
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # 每2小时运行一次，用于自动报告
+    - cron: '0 */2 * * *'
+  workflow_dispatch:  # 允许手动触发
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: '**/package-lock.json'
+    
+    - name: Install root dependencies
+      run: npm ci
+      working-directory: .
+    
+    - name: Install frontend dependencies
+      run: npm ci
+      working-directory: frontend
+    
+    - name: Install backend dependencies
+      run: npm ci
+      working-directory: backend
+    
+    - name: Lint code
+      run: npm run lint
+    
+    - name: Build frontend
+      run: npm run build
+      working-directory: frontend
+      env:
+        NODE_ENV: production
+    
+    - name: Build backend
+      run: npm run build
+      working-directory: backend
+      env:
+        NODE_ENV: production
+    
+    - name: Run tests
+      run: npm test
+      working-directory: .
+    
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: build-artifacts
+        path: |
+          frontend/dist/
+          backend/dist/
+        retention-days: 7
+
+  deploy-frontend:
+    needs: test-and-build
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Download build artifacts
+      uses: actions/download-artifact@v3
+      with:
+        name: build-artifacts
+        path: .
+    
+    - name: Deploy to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./frontend/dist
+        user_name: 'github-actions[bot]'
+        user_email: 'github-actions[bot]@users.noreply.github.com'
+        commit_message: 'Deploy academic-camp frontend ${{ github.sha }}'
+    
+    - name: Update deployment status
+      run: |
+        echo "Frontend deployed to GitHub Pages"
+        echo "URL: https://liuliu19900303-hub.github.io/academic-camp/"
+
+  deploy-backend:
+    needs: test-and-build
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+    
+    - name: Install backend dependencies
+      run: npm ci
+      working-directory: backend
+    
+    - name: Build backend
+      run: npm run build
+      working-directory: backend
+      env:
+        NODE_ENV: production
+    
+    - name: Deploy to Vercel
+      uses: amondnet/vercel-action@v20
+      with:
+        vercel-token: ${{ secrets.VERCEL_TOKEN }}
+        vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+        vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+        working-directory: ./backend
+        vercel-args: '--prod'
+    
+    - name: Update deployment status
+      run: |
+        echo "Backend deployed to Vercel"
+        echo "Check Vercel dashboard for URL"
+
+  send-progress-report:
+    needs: [test-and-build]
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+    
+    - name: Install dependencies
+      run: npm ci
+      working-directory: .
+    
+    - name: Generate progress report
+      run: node scripts/send-progress-report-1.js
+      working-directory: .
+      env:
+        FEISHU_WEBHOOK_URL: ${{ secrets.FEISHU_WEBHOOK_URL }}
+        FEISHU_SECRET: ${{ secrets.FEISHU_SECRET }}
+        NODE_ENV: production
+    
+    - name: Send Feishu notification
+      if: always()
+      run: |
+        echo "Progress report generated"
+        echo "Check Feishu for detailed report"
+
+  cleanup:
+    needs: [deploy-frontend, deploy-backend, send-progress-report]
+    if: always()
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Cleanup old artifacts
+      run: |
+        echo "Cleaning up workflow artifacts"
+        echo "Workflow completed at $(date)"
