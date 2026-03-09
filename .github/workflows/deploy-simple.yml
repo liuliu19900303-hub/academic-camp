@@ -1,0 +1,225 @@
+name: Deploy Academic Camp (Simple)
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Create minimal frontend
+        run: |
+          mkdir -p public
+          cat > public/index.html << 'EOF'
+          <!DOCTYPE html>
+          <html lang="zh-CN">
+          <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>学术集中营 - 3D沉浸式学术协作平台</title>
+              <style>
+                  * { margin: 0; padding: 0; box-sizing: border-box; }
+                  body { 
+                      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                      background: linear-gradient(135deg, #0d1b5c 0%, #1a237e 100%);
+                      color: white;
+                      min-height: 100vh;
+                      display: flex;
+                      flex-direction: column;
+                      align-items: center;
+                      justify-content: center;
+                      text-align: center;
+                      padding: 20px;
+                  }
+                  .container {
+                      max-width: 800px;
+                      background: rgba(255, 255, 255, 0.1);
+                      backdrop-filter: blur(10px);
+                      border-radius: 20px;
+                      padding: 40px;
+                      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+                      border: 1px solid rgba(255, 255, 255, 0.2);
+                  }
+                  h1 {
+                      font-size: 3em;
+                      margin-bottom: 20px;
+                      background: linear-gradient(45deg, #4fc3f7, #29b6f6);
+                      -webkit-background-clip: text;
+                      -webkit-text-fill-color: transparent;
+                  }
+                  .emoji {
+                      font-size: 4em;
+                      margin-bottom: 20px;
+                  }
+                  .status {
+                      background: rgba(76, 175, 80, 0.2);
+                      border: 2px solid #4caf50;
+                      border-radius: 10px;
+                      padding: 20px;
+                      margin: 20px 0;
+                  }
+                  .features {
+                      display: grid;
+                      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                      gap: 15px;
+                      margin: 30px 0;
+                  }
+                  .feature {
+                      background: rgba(255, 255, 255, 0.05);
+                      padding: 15px;
+                      border-radius: 10px;
+                      border: 1px solid rgba(255, 255, 255, 0.1);
+                  }
+                  .links {
+                      margin-top: 30px;
+                  }
+                  .link {
+                      display: inline-block;
+                      background: #2196f3;
+                      color: white;
+                      padding: 12px 24px;
+                      border-radius: 50px;
+                      text-decoration: none;
+                      margin: 10px;
+                      font-weight: bold;
+                      transition: all 0.3s;
+                  }
+                  .link:hover {
+                      background: #1976d2;
+                      transform: translateY(-2px);
+                      box-shadow: 0 10px 20px rgba(33, 150, 243, 0.3);
+                  }
+                  .crayfish {
+                      font-size: 2em;
+                      margin-top: 20px;
+                      animation: float 3s ease-in-out infinite;
+                  }
+                  @keyframes float {
+                      0%, 100% { transform: translateY(0); }
+                      50% { transform: translateY(-10px); }
+                  }
+              </style>
+          </head>
+          <body>
+              <div class="container">
+                  <div class="emoji">🦞📚</div>
+                  <h1>学术集中营</h1>
+                  <p style="font-size: 1.2em; margin-bottom: 20px; opacity: 0.9;">
+                      3D沉浸式学术协作平台
+                  </p>
+                  
+                  <div class="status">
+                      <h2>🚀 部署状态</h2>
+                      <p>项目已成功部署到GitHub Pages！</p>
+                      <p style="margin-top: 10px; color: #4caf50;">
+                          ✅ 外网访问已启用
+                      </p>
+                  </div>
+                  
+                  <div class="features">
+                      <div class="feature">
+                          <h3>🎯 核心功能</h3>
+                          <p>3D沉浸式学术办公环境</p>
+                      </div>
+                      <div class="feature">
+                          <h3>🤖 智能代理</h3>
+                          <p>6个专业学术子代理协作</p>
+                      </div>
+                      <div class="feature">
+                          <h3>📊 实时监控</h3>
+                          <p>7x24小时自动化进度报告</p>
+                      </div>
+                      <div class="feature">
+                          <h3>🚀 持续部署</h3>
+                          <p>GitHub Actions自动化流程</p>
+                      </div>
+                  </div>
+                  
+                  <div class="links">
+                      <h3>🔗 快速链接</h3>
+                      <a href="https://github.com/liuliu19900303-hub/academic-camp" class="link" target="_blank">
+                          GitHub仓库
+                      </a>
+                      <a href="https://github.com/liuliu19900303-hub/academic-camp/actions" class="link" target="_blank">
+                          部署状态
+                      </a>
+                      <a href="/academic-camp/" class="link">
+                          3D办公室 (建设中)
+                      </a>
+                  </div>
+                  
+                  <div class="crayfish">
+                      🦞 小龙虾AI助手为您服务！
+                  </div>
+                  
+                  <p style="margin-top: 30px; opacity: 0.7; font-size: 0.9em;">
+                      部署时间: 2026-03-09 | 版本: 1.0.0
+                  </p>
+              </div>
+              
+              <script>
+                  // 简单交互效果
+                  document.querySelectorAll('.link').forEach(link => {
+                      link.addEventListener('mouseenter', () => {
+                          link.style.transform = 'translateY(-2px)';
+                      });
+                      link.addEventListener('mouseleave', () => {
+                          link.style.transform = 'translateY(0)';
+                      });
+                  });
+                  
+                  // 显示实时时间
+                  function updateTime() {
+                      const now = new Date();
+                      const timeStr = now.toLocaleString('zh-CN', {
+                          timeZone: 'Asia/Shanghai',
+                          year: 'numeric',
+                          month: '2-digit',
+                          day: '2-digit',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                          second: '2-digit'
+                      });
+                      document.getElementById('current-time').textContent = timeStr;
+                  }
+                  
+                  // 添加时间显示元素
+                  const timeEl = document.createElement('p');
+                  timeEl.id = 'current-time';
+                  timeEl.style.marginTop = '20px';
+                  timeEl.style.opacity = '0.6';
+                  timeEl.style.fontSize = '0.9em';
+                  document.querySelector('.container').appendChild(timeEl);
+                  
+                  updateTime();
+                  setInterval(updateTime, 1000);
+              </script>
+          </body>
+          </html>
+          EOF
+          echo "✅ 最小化前端页面创建完成"
+      
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+      
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './public'
+      
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
